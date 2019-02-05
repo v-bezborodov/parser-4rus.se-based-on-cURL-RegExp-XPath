@@ -6,10 +6,11 @@
 <?php
 set_time_limit(0);
 $fp = fopen("emails2.csv", "a");
-$i=168407;//set initial point of search
-$deep_search=6291;//set deep of search
+$i=168407;//set line counter, set 0 in case of initial parsing
+$deep_search=6291;//set deep of search, set 0 in case of initial parsing
+$start_deep=5616;//number of page where start parse from, set 0 in case of initial parsing
 
-for($start_deep=5616; $start_deep<$deep_search; $start_deep++){
+for($start_deep; $start_deep<$deep_search; $start_deep++){
 
 	$url[$start_deep]="http://www.sweden4rus.nu/rus/anons/poisksub?page=".$start_deep."&vremiaPE=ON";
 	echo "<b>".$url[$start_deep]."</b><br>";

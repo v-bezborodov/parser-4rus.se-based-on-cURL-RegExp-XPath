@@ -5,11 +5,15 @@
 </head>
 <?php
 set_time_limit(0);
-$fp = fopen("emails.csv", "r");
-$fp_items = fopen("announces.csv", "a");
+$fp = fopen("id_emails.csv", "r");
+$fp_items = fopen("announces_2.csv", "a");
 $row=1;
+$deep=52137;//set how deep parser will work (variable (counter) from $fp)
 while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
-	$rowSize=count($data);
+	if ((check_empty($data[2])=="n/a"&&check_empty($data[3])=="n/a")&&($data[0]==$deep)){//check does node has PHONENUMBER and EMAIL and set deepness
+			continue;
+	}else{
+
         $url="http://www.sweden4rus.nu/rus/anons/announcement?id=".trim($data[1]);
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1); 
@@ -19,6 +23,7 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 		$dom = new DOMDocument();
 		@$dom->loadHTML($html);
 		$xpath = new DOMXPath($dom);
+		$tableRows_announce_title =$xpath->query("//h3");
 		$tableRows_announce =$xpath->query("//div[contains(@style, 'margin:5px') and contains(@style, 'margin-top:20px')]");
 		$tableRows_img =$xpath->query("//div[contains(@style,'margin-left:20px') and contains(@style, 'margin-bottom:15px')]");
 		
@@ -30,13 +35,16 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 		foreach ($tableRows_img as $value) {
 			$nodes_iterator_img=$value->ownerDocument->saveHTML($value);
 			}
+		foreach ($tableRows_announce_title as $value) {
+			$nodes_iterator_announce_title=$value->nodeValue;
+			}
 
-		
-		echo $line=$row++."| ".trim($data[1])."| ".trim($data[5])."| ".trim($data[4])."| ".trim($data[2]).", ".trim($data[3])."| ".save_announce($nodes_iterator_announce)."| ".save_img($nodes_iterator_img);
+		echo "<br>";
+		echo $line=$row++."|".check_empty($data[1])."|".check_empty($data[5])."|".check_empty($data[4])."|".check_empty($data[2])."|".check_empty($data[3])."|".check_empty($nodes_iterator_announce_title)."|".save_announce($nodes_iterator_announce)."|".save_img($nodes_iterator_img);
 		fwrite($fp_items, $line.PHP_EOL);
-		
 		unset($line,$nodes_iterator_img,$nodes_iterator_announce);
     }
+}
    fclose($fp); 
 
    	function save_img($raw_img){
@@ -45,8 +53,7 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 		if(!empty($match)){
 			return  $match[0][1];
 		}
-			return "n/a";
-		
+			return "n/a";	
 	}
 
 	function save_announce($raw_announce){
@@ -57,6 +64,15 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 		}else{
 			return "n/a";
 		}	
+	}
+
+	function check_empty($raw_node){
+		trim($raw_node);
+		if (strlen($raw_node)>2){
+			return trim($raw_node);
+		}else{
+			return "n/a";
+		}
 	}
 
   
