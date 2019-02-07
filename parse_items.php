@@ -7,20 +7,19 @@
 set_time_limit(0);
 $fp = fopen("id_emails.csv", "r");
 $fp_items = fopen("announces.csv", "a");
-$row=1;
-define("start", 1);//set from what point parser will work
+$row=0;//set counter
+define("start", 0);//set from what point parser will work
 define("deep",52137);//set how deep parser will work (variable (counter) from $fp)
 
 while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
-	 $num = count($data);
+
 	if (check_empty($data[2])=="n/a"&&check_empty($data[3])=="n/a"||(int)$data[0]<=start){//check does node has PHONENUMBER and EMAIL and set start point
 		echo "<b><br>Skipped<br></b>";
 			continue;
-	}elseif(($data[0]==$deep)){//break if deepness reached
+	}elseif((int)$data[0]==deep){//break if deepness reached
 			echo "<b>Script has ended</b>";
 			break;
-	}
-	else{		 
+	}else{		 
         $url="http://www.sweden4rus.nu/rus/anons/announcement?id=".trim($data[1]);
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1); 
@@ -35,22 +34,21 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 		$tableRows_img =$xpath->query("//div[contains(@style,'margin-left:20px') and contains(@style, 'margin-bottom:15px')]");
 		$tableRows_city =$xpath->query("//tr/td[@class='TblAnonsInfo']/following-sibling::td");
 		
-		
+		foreach ($tableRows_announce_title as $value) {
+			$nodes_iterator_announce_title=$value->nodeValue;
+			}	
 		foreach ($tableRows_announce as $value) {
 			$nodes_iterator_announce=$value->ownerDocument->saveHTML($value);
 			}
-
 		foreach ($tableRows_img as $value) {
 			$nodes_iterator_img=$value->ownerDocument->saveHTML($value);
 			}
-		foreach ($tableRows_announce_title as $value) {
-			$nodes_iterator_announce_title=$value->nodeValue;
-			}
 		foreach ($tableRows_city as $value) {
-			$nodes_iterator_city=$value->ownerDocument->saveHTML($value);
+			$nodes_iterator_city=$value->nodeValue;
 			}
 
 		echo $line=$row++."|".check_empty($data[1])."|".check_empty($data[5])."|".check_empty($data[4])."|".check_empty($data[2])."|".check_empty($data[3])."|".check_empty($nodes_iterator_city)."|".check_empty($nodes_iterator_announce_title)."|".save_announce($nodes_iterator_announce)."|".save_img($nodes_iterator_img);
+		echo "<br><b>----------------------------------------------------</b><br>";
 		fwrite($fp_items, $line.PHP_EOL);
 		unset($line,$nodes_iterator_img,$nodes_iterator_announce);
     }
@@ -70,7 +68,7 @@ while (($data = fgetcsv($fp, 0, ",")) !== FALSE) {
 	   	$regexp = '/<div style="margin:5px; margin-top:20px; margin-bottom:15px; line-height: 24px;">(.*?)<\/div>.*/sui';
 		preg_match_all($regexp, $raw_announce, $match,PREG_SET_ORDER);
 		if(!empty($match)){
-			return  $match[0][1];
+			return  trim($match[0][1]);
 		}else{
 			return "n/a";
 		}	
